@@ -7,34 +7,43 @@ WebSockets have grown into an elementary tool that allow applications to exchang
 For such use-cases, StompWS enables applications written in Python to communicate with STOMP based webservices through a simple API.
 
 ## API
-The application is callback driven.
-
 STOMP is a frame based protocol. A frame consists of a command, a set of optional headers and an optional body. A STOMP client is a user-agent which can act in two (possibly simultaneous) modes:
 - as a producer, sending messages to a destination on the server via a `SEND` frame
 - as a consumer, sending a `SUBSCRIBE` frame for a given destination and receiving messages from the server as `MESSAGE` frames.
 
-To use the library, a dictionary of callbacks needs to be constructed and passed to the `Stomp()` constructor.  
-The dictionary is a key-value pair of strings mapped to functions. The key is the type of frame received from the webserver and the function is the callback that needs to be executed to act upon the response.
+The API exposed by the library abstracts away most of this.
 
-```
-# register callbacks based on type of response
-# e.x: if response from the server is a CONNECTED frame, execute subscribe function
-
-callbacks = {
-    'INIT' : connect_callback,
-    'CONNECTED' : subscribe_callback
-}
+We instantiate a Stomp object to obtain a reference to the core API:
+```py
+stomp = Stomp("hostname/endpoint", sockjs=True, wss=False)
 ```
 
+Below are the APIs that are exposed by the object
 
-The callback signature itself looks like this:
+### .connect()
+Attempts to connect to the server using the information provided while instantiating.
+
+### .send(destination, message)
+Sends `message` to `destination` on the server. Refer your STOMP server documentation to find out what that is.
+
+### .subscribe(destination, callback)
+Subscribes to a `destination` (think topic) on the STOMP server to receive messages that are published on it.
+
+The `callback` argument must be a function that accepts a `msg` argument:
+```py
+# define the callback function that should act upon the message
+def do_something(msg):
+    print(msg)
+
+# subscribe to a destination and pass the callback function
+stomp.subscribe('/some-destination', do_something)
 ```
-def connect_callback(stomp):
-  pass
-```
 
-The `stomp` argument is a reference to the object that offers the core library APIs that interact with the webserver.
-- connect()
-- subscribe()
-- send()
+### .unsubscribe(destination) [to be implemented]
+### .disconnect() [to be implemented]
 
+
+## Todo
+- logging
+- better message passing bw Stomp and Dispatcher (reduce spaghetti code)
+- add trace flag
